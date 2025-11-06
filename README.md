@@ -9,7 +9,7 @@
 
 A modern chatbot application that allows users to upload PDF documents and ask questions about their content using Retrieval Augmented Generation (RAG) with Google Gemini and Pinecone vector database.
 
-![RAG Chatbot Demo](https://placehold.co/800x400/4F46E5/FFFFFF?text=RAG+Chatbot+Demo)
+![RAG Chatbot Demo](./preview/preview-1.png)
 
 ## 🌟 Features
 
@@ -200,13 +200,13 @@ rag-chatbot/
 ## 🎨 UI Preview
 
 ### Chat Interface
-![Chat Interface](https://placehold.co/600x400/4F46E5/FFFFFF?text=Chat+Interface)
+![Chat Interface](./preview/preview-2.png)
 
 ### Document Upload
-![Document Upload](https://placehold.co/600x400/10B981/FFFFFF?text=Document+Upload)
+![Document Upload](./preview/preview-1.png)
 
 ### Dark Mode
-![Dark Mode](https://placehold.co/600x400/1E293B/FFFFFF?text=Dark+Mode)
+![Dark Mode](./preview/preview-2.png)
 
 ## 🤝 Contributing
 
