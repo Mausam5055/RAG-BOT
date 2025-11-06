@@ -15,8 +15,14 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Prepend backend URL for API calls
-  const fullUrl = url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
+  // Prepend backend URL for API calls, ensuring no double slashes
+  let fullUrl = url;
+  if (url.startsWith("/api/")) {
+    // Remove trailing slash from BACKEND_URL if present and ensure single slash
+    const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
+    const apiPath = url.startsWith('/') ? url : `/${url}`;
+    fullUrl = `${baseUrl}${apiPath}`;
+  }
   
   // Handle FormData differently from JSON
   const isFormData = data instanceof FormData;
@@ -40,8 +46,14 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
-    // Prepend backend URL for API calls
-    const fullUrl = url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
+    // Prepend backend URL for API calls, ensuring no double slashes
+    let fullUrl = url;
+    if (url.startsWith("/api/")) {
+      // Remove trailing slash from BACKEND_URL if present and ensure single slash
+      const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
+      const apiPath = url.startsWith('/') ? url : `/${url}`;
+      fullUrl = `${baseUrl}${apiPath}`;
+    }
     
     const res = await fetch(fullUrl, {
       // Don't include credentials to avoid CORS issues with specific origins
