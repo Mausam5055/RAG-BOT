@@ -1,0 +1,172 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import multer from "multer";
+import { storage } from "./storage";
+import { ragService } from "./lib/rag-service";
+import { chatRequestSchema } from "@shared/schema";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF files are allowed"));
+    }
+  },
+});
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Upload and process a PDF
+  app.post("/api/upload", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const { documentId, pageCount } = await ragService.processDocument(
+        req.file.buffer,
+        req.file.originalname
+      );
+
+      const document = await storage.getDocument(documentId);
+
+      res.json({
+        id: document!.id,
+        filename: document!.filename,
+        pageCount,
+        uploadedAt: document!.uploadedAt,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ error: "Failed to process PDF" });
+    }
+  });
+
+  // Ask a question about a document
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const parsed = chatRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid request", details: parsed.error });
+      }
+
+      const { documentId, question } = parsed.data;
+
+      // Verify document exists before creating messages
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      const { answer, snippets } = await ragService.answerQuestion(documentId, question);
+
+      const userMessage = await storage.createMessage({
+        documentId,
+        role: "user",
+        content: question,
+      });
+
+      const assistantMessage = await storage.createMessage({
+        documentId,
+        role: "assistant",
+        content: answer,
+        snippets,
+      });
+
+      res.json({
+        userMessage: {
+          id: userMessage.id,
+          role: userMessage.role,
+          content: userMessage.content,
+          timestamp: userMessage.timestamp,
+        },
+        assistantMessage: {
+          id: assistantMessage.id,
+          role: assistantMessage.role,
+          content: assistantMessage.content,
+          timestamp: assistantMessage.timestamp,
+          snippets: assistantMessage.snippets,
+        },
+      });
+    } catch (error) {
+      console.error("Chat error:", error);
+      const message = error instanceof Error ? error.message : "Failed to process question";
+      const statusCode = message === "Document not found" ? 404 : 500;
+      res.status(statusCode).json({ error: message });
+    }
+  });
+
+  // Get all documents
+  app.get("/api/documents", async (_req, res) => {
+    try {
+      const documents = await storage.getAllDocuments();
+      res.json(documents.map((doc) => ({
+        id: doc.id,
+        filename: doc.filename,
+        pageCount: doc.pageCount,
+        uploadedAt: doc.uploadedAt,
+      })));
+    } catch (error) {
+      console.error("Get documents error:", error);
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+
+  // Get a specific document
+  app.get("/api/documents/:id", async (req, res) => {
+    try {
+      const document = await storage.getDocument(req.params.id);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      res.json({
+        id: document.id,
+        filename: document.filename,
+        pageCount: document.pageCount,
+        uploadedAt: document.uploadedAt,
+      });
+    } catch (error) {
+      console.error("Get document error:", error);
+      res.status(500).json({ error: "Failed to fetch document" });
+    }
+  });
+
+  // Delete a document
+  app.delete("/api/documents/:id", async (req, res) => {
+    try {
+      await ragService.deleteDocument(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete document error:", error);
+      res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
+  // Get messages for a document
+  app.get("/api/messages/:documentId", async (req, res) => {
+    try {
+      const messages = await storage.getMessagesByDocumentId(req.params.documentId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Get messages error:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Clear messages for a document
+  app.delete("/api/messages/:documentId", async (req, res) => {
+    try {
+      await storage.deleteMessagesByDocumentId(req.params.documentId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete messages error:", error);
+      res.status(500).json({ error: "Failed to delete messages" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
