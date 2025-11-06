@@ -197,16 +197,7 @@ rag-chatbot/
 | **PDF Processing** | pdf-parse |
 | **Deployment** | Vercel (Frontend), Render (Backend) |
 
-## 🎨 UI Preview
 
-### Chat Interface
-![Chat Interface](./preview/preview-2.png)
-
-### Document Upload
-![Document Upload](./preview/preview-1.png)
-
-### Dark Mode
-![Dark Mode](./preview/preview-2.png)
 
 ## 🤝 Contributing
 
