@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
 
 // Load environment variables
 dotenv.config();
@@ -79,12 +80,15 @@ async function createServer() {
   return cachedServer;
 }
 
-// For Vercel serverless deployment
-export default async function handler(request: Request, response: Response) {
-  const server = await createServer();
-  
-  // Handle the request
-  app(request, response);
+// Vercel serverless function handler
+export default async function handler(req: Request, res: Response) {
+  try {
+    const server = await createServer();
+    return app(req, res);
+  } catch (error) {
+    console.error("Server error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 // For local development
