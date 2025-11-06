@@ -2,13 +2,13 @@
 
 import React, { FormEvent, ChangeEvent } from "react";
 import Messages from "./Messages";
-import { Message } from "ai/react";
+import { UIMessage } from "ai";
 
 interface Chat {
   input: string;
   handleInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleMessageSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
-  messages: Message[];
+  messages: UIMessage[];
 }
 
 const Chat: React.FC<Chat> = ({

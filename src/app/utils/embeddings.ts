@@ -1,23 +1,17 @@
-
-import { OpenAIApi, Configuration } from "openai-edge";
-
-const config = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
-})
-const openai = new OpenAIApi(config)
+import { embed } from "ai";
+import { google } from "@ai-sdk/google";
 
 export async function getEmbeddings(input: string) {
   try {
-    const response = await openai.createEmbedding({
-      model: "text-embedding-ada-002",
-      input: input.replace(/\n/g, ' ')
-    })
-
-    const result = await response.json();
-    return result.data[0].embedding as number[]
-
+    console.log("Generating embeddings for input:", input.substring(0, 50) + "...");
+    const { embedding } = await embed({
+      model: google.textEmbeddingModel('text-embedding-004'),
+      value: input.replace(/\n/g, ' ')
+    });
+    console.log("Generated embedding with length:", embedding.length);
+    return embedding;
   } catch (e) {
-    console.log("Error calling OpenAI embedding API: ", e);
-    throw new Error(`Error calling OpenAI embedding API: ${e}`);
+    console.log("Error calling Google Gemini embedding API: ", e);
+    throw new Error(`Error calling Google Gemini embedding API: ${e}`);
   }
 }

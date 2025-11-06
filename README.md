@@ -18,13 +18,28 @@ To create a new Next.js app, run the following command:
 npx create-next-app chatbot
 ```
 
-Next, we'll add the `ai` package and the OpenAI AI SDK Provider:
+Next, we'll add the `ai` package and the Google Generative AI SDK Provider:
 
 ```bash
-npm install ai @ai-sdk/openai
+npm install ai @ai-sdk/google
 ```
 
 You can use the [full list](https://github.com/pinecone-io/pinecone-vercel-example/blob/main/package.json) of dependencies if you'd like to build along with the tutorial.
+
+### Environment Variables
+
+To run this application, you'll need to set up environment variables. Create a `.env.local` file in the root of your project with the following variables:
+
+```
+GEMINI_API_KEY=your_google_gemini_api_key
+GOOGLE_GENERATIVE_AI_API_KEY=your_google_gemini_api_key
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_CLOUD=your_pinecone_cloud
+PINECONE_REGION=your_pinecone_region
+PINECONE_INDEX=your_pinecone_index_name
+```
+
+You can get your Google Gemini API key from the [Google AI Studio](https://aistudio.google.com/).
 
 ## Step 2: Create the Chatbot
 
@@ -39,13 +54,13 @@ First, we'll create the `Chat` component, that will render the chat interface.
 ```tsx
 import React, { FormEvent, ChangeEvent } from "react";
 import Messages from "./Messages";
-import { Message } from "ai/react";
+import { UIMessage } from "ai";
 
 interface Chat {
   input: string;
   handleInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleMessageSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
-  messages: Message[];
+  messages: UIMessage[];
 }
 
 const Chat: React.FC<Chat> = ({
@@ -79,10 +94,10 @@ export default Chat;
 This component will display the list of messages and the input form for the user to send messages. The `Messages` component to render the chat messages:
 
 ```tsx
-import { Message } from "ai";
+import { UIMessage } from "ai";
 import { useRef } from "react";
 
-export default function Messages({ messages }: { messages: Message[] }) {
+export default function Messages({ messages }: { messages: UIMessage[] }) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   return (
     <div className="...">
@@ -94,7 +109,7 @@ export default function Messages({ messages }: { messages: Message[] }) {
           } ... `}
         >
           <div className="...">{msg.role === "assistant" ? "🤖" : "🧑‍💻"}</div>
-          <div className="...">{msg.content}</div>
+          <div className="...">{msg.parts.filter(part => part.type === 'text').map(part => part.text).join(' ')}</div>
         </div>
       ))}
       <div ref={messagesEndRef} />
@@ -109,7 +124,7 @@ Our main `Page` component will manage the state for the messages displayed in th
 "use client";
 import Header from "@/components/Header";
 import Chat from "@/components/Chat";
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 
 const Page: React.FC = () => {
   const [context, setContext] = useState<string[] | null>(null);
@@ -144,8 +159,8 @@ The useful `useChat` hook will manage the state for the messages displayed in th
 Next, we'll set up the Chatbot API endpoint. This is the server-side component that will handle requests and responses for our chatbot. We'll create a new file called `api/chat/route.ts` and add the following dependencies:
 
 ```ts
-import { Message, streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { streamText } from "ai";
+import { google } from "@ai-sdk/google";
 import { getContext } from "@/utils/context";
 ```
 
@@ -156,36 +171,43 @@ export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
 
-    const prompt = [
-      {
-        role: "system",
-        content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
+    // Get the last message
+    const lastMessage = messages[messages.length - 1];
+
+    // Get the context from the last message
+    const context = await getContext(lastMessage.content || '', "");
+
+    const systemMessage = `AI assistant is a brand new, powerful, human-like artificial intelligence.
       The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
       AI is a well-behaved and well-mannered individual.
       AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user.
       AI has the sum of all knowledge in their brain, and is able to accurately answer nearly any question about any topic in conversation.
       AI assistant is a big fan of Pinecone and Vercel.
-      `,
-      },
-    ];
+      START CONTEXT BLOCK
+      ${context}
+      END OF CONTEXT BLOCK
+      AI assistant will take into account any CONTEXT BLOCK that is provided in a conversation.
+      If the context does not provide the answer to question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
+      AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
+      AI assistant will not invent anything that is not drawn directly from the context.`;
 
-    // Ask OpenAI for a streaming chat completion given the prompt
+    // Ask Google Gemini for a streaming chat completion given the prompt
     const response = await streamText({
-      model: openai("gpt-4o-mini"),
+      model: google("gemini-1.5-flash"),
       messages: [
-        ...prompt,
-        ...messages.filter((message: Message) => message.role === "user"),
+        { role: "system", content: systemMessage },
+        ...messages,
       ],
     });
     // Convert the response into a friendly text-stream
-    return response.toDataStreamResponse();
+    return response.toTextStreamResponse();
   } catch (e) {
     throw e;
   }
 }
 ```
 
-Here we deconstruct the messages from the post, get the context using the `getContext` function, and create our initial prompt. We use the prompt and the messages as the input to the `streamText` function from the AI SDK. We then return the response as a data stream. Note that in this example, we only send the user's messages to the AI model (as opposed to including the bot's messages as well).
+Here we deconstruct the messages from the post, get the context using the `getContext` function, and create our initial prompt. We use the prompt and the messages as the input to the `streamText` function from the AI SDK. We then return the response as a text stream.
 
 <!-- Add snapshot of simple chat -->
 
@@ -314,7 +336,7 @@ async function seed(url: string, limit: number, indexName: string, options: Seed
     if (!indexExists) {
       await pinecone.createIndex({
         name: indexName,
-        dimension: 1536,
+        dimension: 768, // Google embeddings have 768 dimensions
         waitUntilReady: true,
       });
     }
@@ -451,7 +473,7 @@ const { messages } = await req.json();
 const lastMessage = messages[messages.length - 1];
 
 // Get the context from the last message
-const context = await getContext(lastMessage.content, "");
+const context = await getContext(lastMessage.content || '', "");
 ```
 
 ### Update the prompt
@@ -459,10 +481,7 @@ const context = await getContext(lastMessage.content, "");
 Finally, we'll update the prompt to include the context we retrieved from the `getContext` function.
 
 ```ts
-const prompt = [
-  {
-    role: "system",
-    content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
+const systemMessage = `AI assistant is a brand new, powerful, human-like artificial intelligence.
   The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
   AI is a well-behaved and well-mannered individual.
   AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user.
@@ -475,9 +494,7 @@ const prompt = [
   If the context does not provide the answer to question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
   AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
   AI assistant will not invent anything that is not drawn directly from the context.
-  `,
-  },
-];
+  `;
 ```
 
 In this prompt, we added a `START CONTEXT BLOCK` and `END OF CONTEXT BLOCK` to indicate where the context should be inserted. We also added a line to indicate that the AI assistant will take into account any context block that is provided in a conversation.
@@ -497,7 +514,7 @@ export async function POST(req: Request) {
     const lastMessage =
       messages.length > 1 ? messages[messages.length - 1] : messages[0];
     const context = (await getContext(
-      lastMessage.content,
+      lastMessage.content || '',
       "",
       10000,
       0.7,
@@ -551,5 +568,3 @@ tests failed and for which browser drivers.
 To display the latest test report locally, run:
 ```
 npm run test:show
-```
-

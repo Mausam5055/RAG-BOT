@@ -16,8 +16,10 @@ type DocumentSplitter = RecursiveCharacterTextSplitter | MarkdownTextSplitter
 
 async function seed(url: string, limit: number, indexName: string, cloudName: ServerlessSpecCloudEnum, regionName: string, options: SeedOptions) {
   try {
-    // Initialize the Pinecone client
-    const pinecone = new Pinecone();
+    // Initialize the Pinecone client with explicit API key
+    const pinecone = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY || '',
+    });
 
     // Destructure the options object
     const { splittingMethod, chunkSize, chunkOverlap } = options;
@@ -37,11 +39,17 @@ async function seed(url: string, limit: number, indexName: string, cloudName: Se
 
     // Create Pinecone index if it does not exist
     const indexList: string[] = (await pinecone.listIndexes())?.indexes?.map(index => index.name) || [];
+    console.log("Existing indexes:", indexList);
+    console.log("Looking for index:", indexName);
+    
     const indexExists = indexList.includes(indexName);
+    console.log("Index exists:", indexExists);
+    
     if (!indexExists) {
+      console.log(`Creating index ${indexName} with dimension 768`);
       await pinecone.createIndex({
         name: indexName,
-        dimension: 1536,
+        dimension: 768, // Google's text-embedding-004 model produces 768-dimensional embeddings
         waitUntilReady: true,
         spec: { 
           serverless: { 
@@ -50,6 +58,7 @@ async function seed(url: string, limit: number, indexName: string, cloudName: Se
           }
         } 
       });
+      console.log(`Index ${indexName} created successfully`);
     }
 
     const index = pinecone.Index(indexName)
@@ -70,7 +79,7 @@ async function seed(url: string, limit: number, indexName: string, cloudName: Se
 
 async function embedDocument(doc: Document): Promise<PineconeRecord> {
   try {
-    // Generate OpenAI embeddings for the document content
+    // Generate embeddings for the document content
     const embedding = await getEmbeddings(doc.pageContent);
 
     // Create a hash of the document content
@@ -79,7 +88,7 @@ async function embedDocument(doc: Document): Promise<PineconeRecord> {
     // Return the vector embedding object
     return {
       id: hash, // The ID of the vector is the hash of the document content
-      values: embedding, // The vector values are the OpenAI embeddings
+      values: embedding, // The vector values are the embeddings
       metadata: { // The metadata includes details about the document
         chunk: doc.pageContent, // The chunk of text that the vector represents
         text: doc.metadata.text as string, // The text of the document
