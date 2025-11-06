@@ -3,6 +3,10 @@ import { google } from "@ai-sdk/google";
 
 export async function getEmbeddings(input: string) {
   try {
+    console.log("Environment variables for embeddings:");
+    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
+    console.log("GOOGLE_GENERATIVE_AI_API_KEY exists:", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+    
     console.log("Generating embeddings for input:", input.substring(0, 50) + "...");
     const { embedding } = await embed({
       model: google.textEmbeddingModel('text-embedding-004'),

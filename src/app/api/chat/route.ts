@@ -7,6 +7,9 @@ export async function POST(req: Request) {
     console.log("Environment variables:");
     console.log("PINECONE_INDEX:", process.env.PINECONE_INDEX);
     console.log("PINECONE_API_KEY exists:", !!process.env.PINECONE_API_KEY);
+    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
+    console.log("GOOGLE_GENERATIVE_AI_API_KEY exists:", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+    console.log("GOOGLE_MODEL:", process.env.GOOGLE_MODEL);
     
     const { messages } = await req.json();
     console.log("Received messages:", messages);
@@ -58,9 +61,13 @@ If the context does not provide the answer to question, the AI assistant will sa
 AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
 AI assistant will not invent anything that is not drawn directly from the context.`;
 
+    // Determine the model to use
+    const modelName = process.env.GOOGLE_MODEL || "gemini-2.5-flash-preview-05-20";
+    console.log("Using model:", modelName);
+    
     // Ask Google Gemini for a streaming chat completion given the prompt
     const response = await streamText({
-      model: google("gemini-1.5-flash"),
+      model: google(modelName),
       system: systemMessage,
       messages: formattedMessages,
     });

@@ -193,7 +193,7 @@ export async function POST(req: Request) {
 
     // Ask Google Gemini for a streaming chat completion given the prompt
     const response = await streamText({
-      model: google("gemini-1.5-flash"),
+      model: google("gemini-2.5-flash-preview-05-20"),
       messages: [
         { role: "system", content: systemMessage },
         ...messages,

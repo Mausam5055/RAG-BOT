@@ -16,6 +16,7 @@ export async function POST(req: Request) {
     console.log("PINECONE_INDEX:", process.env.PINECONE_INDEX);
     console.log("PINECONE_CLOUD:", process.env.PINECONE_CLOUD);
     console.log("PINECONE_REGION:", process.env.PINECONE_REGION);
+    console.log("PINECONE_API_KEY exists:", !!process.env.PINECONE_API_KEY);
     
     const documents = await seed(
       url,
