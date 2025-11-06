@@ -37,4 +37,6 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+  // Add base configuration for Vercel
+  base: process.env.VERCEL ? './' : '/',
 });

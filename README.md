@@ -1,183 +1,65 @@
-# RAG-Powered PDF Chatbot
+# RAG Chatbot - PDF Document Assistant
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/your-username/rag-pdf-chatbot/blob/main/LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-blue.svg)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/typescript-%5E5.0.0-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/next.js-%5E14.0.0-blue.svg)](https://nextjs.org/)
-[![Vercel](https://img.shields.io/badge/deployed%20on-vercel-black.svg)](https://vercel.com)
+A React-based chatbot application that allows users to upload PDF documents and ask questions about their content using Retrieval Augmented Generation (RAG) with Google Gemini and Pinecone.
 
-A full-stack Retrieval Augmented Generation (RAG) chatbot application that allows users to upload PDF documents and ask questions about their content. Built with Next.js, Pinecone, and Google Gemini.
+## Features
 
-## 🌟 Features
+- Upload PDF documents
+- Ask questions about document content
+- Get AI-powered answers with context snippets
+- Clean, responsive UI with dark/light mode
 
-| Feature | Description |
-|--------|-------------|
-| **PDF Upload** | Upload and process PDF documents for analysis |
-| **RAG Technology** | Uses Retrieval Augmented Generation for accurate responses |
-| **Vector Search** | Pinecone-powered semantic search through document content |
-| **AI-Powered Q&A** | Ask questions and get context-aware answers from your documents |
-| **Real-time Chat** | Interactive chat interface with streaming responses |
-| **Context Snippets** | See which parts of the document informed each response |
+## Deployment to Vercel
 
-## 📷 Preview
-
-![Chat Interface](https://placehold.co/800x400?text=Chat+Interface+Preview)
-*Chat interface showing document context and AI responses*
-
-![Document Upload](https://placehold.co/800x400?text=Document+Upload+Preview)
-*PDF document upload and processing view*
-
-## 🏗️ Architecture
-
-```mermaid
-graph TB
-    A[User Interface] --> B[Next.js Frontend]
-    B --> C[API Routes]
-    C --> D[Gemini Service]
-    C --> E[Pinecone Service]
-    C --> F[PDF Processor]
-    D --> G[Google Gemini API]
-    E --> H[Pinecone Vector DB]
-    F --> I[PDF Parsing]
-    I --> J[Text Chunking]
-    J --> K[Embedding Generation]
-    K --> H
-    H --> L[Vector Search]
-    L --> D
-```
-
-## 🔄 Data Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant A as API
-    participant P as PDF Processor
-    participant G as Gemini
-    participant V as Pinecone
-
-    U->>F: Upload PDF
-    F->>A: POST /api/upload
-    A->>P: Process PDF
-    P->>G: Generate Embeddings
-    G->>V: Store Vectors
-    A->>F: Return documentId
-    
-    U->>F: Ask Question
-    F->>A: POST /api/chat
-    A->>G: Generate Query Embedding
-    G->>V: Vector Search
-    V->>A: Return Context
-    A->>G: Generate Answer
-    G->>F: Stream Response
-    F->>U: Display Answer
-```
-
-## 🚀 Getting Started
+This application can be deployed to Vercel as a React app with a serverless backend.
 
 ### Prerequisites
 
-| Requirement | Version |
-|-------------|---------|
-| Node.js | >= 18.0.0 |
-| npm | >= 8.0.0 |
-| Google Gemini API Key | - |
-| Pinecone Account | - |
+1. A [Vercel](https://vercel.com) account
+2. API keys for:
+   - Google Gemini
+   - Pinecone
 
 ### Environment Variables
 
-Create a `.env.local` file in the root directory:
+Set these environment variables in your Vercel project settings:
 
-```env
+```
 GEMINI_API_KEY=your_google_gemini_api_key
 PINECONE_API_KEY=your_pinecone_api_key
-PINECONE_INDEX=your_index_name
+PINECONE_CLOUD=your_pinecone_cloud
+PINECONE_REGION=your_pinecone_region
+PINECONE_INDEX=your_pinecone_index_name
 ```
 
-### Installation
+### Deployment Steps
 
-```bash
-# Clone the repository
-git clone https://github.com/your-username/rag-pdf-chatbot.git
+1. Push your code to a GitHub repository
+2. Log in to your Vercel account
+3. Click "New Project"
+4. Import your repository
+5. Configure the project:
+   - Framework Preset: Other
+   - Build Command: `npm run build`
+   - Output Directory: `dist/public`
+6. Add the environment variables listed above
+7. Deploy!
 
-# Navigate to the project directory
-cd rag-pdf-chatbot
+The application will automatically build and deploy. Vercel will provide you with a URL to access your deployed application.
 
-# Install dependencies
-npm install
-```
+## Local Development
 
-### Running the Application
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Create a `.env.local` file with your API keys
+4. Start the development server: `npm run dev`
+5. Visit `http://localhost:5000` in your browser
 
-```bash
-# Development mode
-npm run dev
+## Technologies Used
 
-# Production build
-npm run build
-npm start
-```
-
-## 🧠 How It Works
-
-### 1. Document Processing
-1. User uploads a PDF document
-2. PDF is parsed and split into text chunks
-3. Each chunk is converted to embeddings using Google Gemini
-4. Embeddings are stored in Pinecone vector database
-
-### 2. Question Answering
-1. User asks a question about the document
-2. Question is converted to embedding
-3. Similar vectors are retrieved from Pinecone
-4. Context is provided to Google Gemini for answer generation
-5. Answer is streamed back to the user
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **Frontend** | Next.js, React, TypeScript, Tailwind CSS |
-| **Backend** | Node.js, Express, TypeScript |
-| **AI** | Google Gemini, Embedding Models |
-| **Vector DB** | Pinecone |
-| **PDF Processing** | pdf-parse |
-| **State Management** | React Query |
-| **UI Components** | Radix UI, Shadcn UI |
-
-## 📊 Performance Metrics
-
-| Metric | Value |
-|--------|-------|
-| Response Time | < 2 seconds |
-| Context Accuracy | 95% |
-| Supported Languages | English |
-| Max PDF Size | 10MB |
-| Concurrent Users | 100+ |
-
-## 🔒 Security
-
-- API keys stored in environment variables
-- Server-side processing of sensitive data
-- No client-side storage of document content
-- Secure PDF handling with validation
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Google Gemini](https://ai.google.dev/) for AI capabilities
-- [Pinecone](https://www.pinecone.io/) for vector database services
-- [Next.js](https://nextjs.org/) for the React framework
-- [Tailwind CSS](https://tailwindcss.com/) for styling
+- React with TypeScript
+- Vite for building
+- Express.js for backend API
+- Google Gemini for AI processing
+- Pinecone for vector storage
+- Tailwind CSS for styling

@@ -18,6 +18,11 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for Vercel
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Upload and process a PDF
   app.post("/api/upload", upload.single("file"), async (req, res) => {
     try {

@@ -68,18 +68,41 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // Determine the correct path for static files in different environments
+  const possiblePaths = [
+    path.resolve(import.meta.dirname, "..", "dist", "public"), // Standard build output
+    path.resolve(import.meta.dirname, "..", "public"),        // Vercel output
+    path.resolve(import.meta.dirname, "public"),              // Local development
+  ];
 
-  if (!fs.existsSync(distPath)) {
+  let distPath = "";
+  for (const possiblePath of possiblePaths) {
+    if (fs.existsSync(possiblePath)) {
+      distPath = possiblePath;
+      break;
+    }
+  }
+
+  if (!distPath) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory. Checked paths: ${possiblePaths.join(", ")}. Make sure to build the client first.`,
     );
   }
 
-  app.use(express.static(distPath));
+  console.log(`Serving static files from: ${distPath}`);
+  
+  // Serve static files with a specific order
+  app.use(express.static(distPath, {
+    index: false // Don't automatically serve index.html
+  }));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // Serve index.html for all non-API routes
+  app.use("*", (req, res, next) => {
+    // Don't serve index.html for API routes
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+    
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
