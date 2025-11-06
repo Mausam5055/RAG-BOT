@@ -7,7 +7,12 @@ import { chatRequestSchema } from "@shared/schema.js";
 
 // Add CORS middleware for all routes
 const addCORSHeaders = (req: any, res: any, next: any) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // For production, use specific origin instead of wildcard when credentials are included
+  const origin = process.env.NODE_ENV === "production" 
+    ? req.get('Origin') || '*'
+    : '*';
+  
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');

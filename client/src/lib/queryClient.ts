@@ -25,7 +25,8 @@ export async function apiRequest(
     method,
     headers: isFormData ? {} : (data ? { "Content-Type": "application/json" } : {}),
     body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
-    credentials: "include",
+    // Don't include credentials to avoid CORS issues with specific origins
+    credentials: "omit",
   });
 
   await throwIfResNotOk(res);
@@ -43,7 +44,8 @@ export const getQueryFn: <T>(options: {
     const fullUrl = url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
     
     const res = await fetch(fullUrl, {
-      credentials: "include",
+      // Don't include credentials to avoid CORS issues with specific origins
+      credentials: "omit",
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
