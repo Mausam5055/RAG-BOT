@@ -120,7 +120,7 @@ npm run dev
 | Service | Platform | URL Pattern |
 |---------|----------|-------------|
 | Frontend | Vercel | `https://your-app.vercel.app` |
-| Backend | Render | `https://your-backend.onrender.com` |
+| Backend | Render + Uptime Robot | `https://your-backend.onrender.com` |
 | Vector DB | Pinecone | `https://your-index-1234567.svc.XYZ.pinecone.io` |
 
 ## 🛠️ API Endpoints
@@ -215,7 +215,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Mausam Kar**
 - Portfolio: [mausam03.vercel.app](https://mausam03.vercel.app)
-- GitHub: [@your-username](https://github.com/your-username)
+- GitHub: [@your-username](https://github.com/Mausam5055)
 
 ## 🙏 Acknowledgements
 
@@ -223,3 +223,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Pinecone](https://www.pinecone.io/) for the vector database
 - [Vercel](https://vercel.com/) for frontend hosting
 - [Render](https://render.com/) for backend hosting
+- [Uptime Robot](https://uptimerobot.com/) for 24/7 backend monitoring and uptime
