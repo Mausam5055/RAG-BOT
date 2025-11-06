@@ -18,10 +18,13 @@ export async function apiRequest(
   // Prepend backend URL for API calls
   const fullUrl = url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
   
+  // Handle FormData differently from JSON
+  const isFormData = data instanceof FormData;
+  
   const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: isFormData ? {} : (data ? { "Content-Type": "application/json" } : {}),
+    body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     credentials: "include",
   });
 

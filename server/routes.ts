@@ -1,9 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
-import { storage } from "./storage";
-import { ragService } from "./lib/rag-service";
-import { chatRequestSchema } from "@shared/schema";
+import { storage } from "./storage.js";
+import { ragService } from "./lib/rag-service.js";
+import { chatRequestSchema } from "@shared/schema.js";
+
+// Add CORS middleware for all routes
+const addCORSHeaders = (req: any, res: any, next: any) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+};
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -18,6 +27,9 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply CORS middleware to all routes
+  app.use(addCORSHeaders);
+  
   // Health check endpoint for Vercel
   app.get("/api/health", (_req, res) => {
     res.status(200).json({ 
@@ -57,7 +69,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Upload error:", error);
-      res.status(500).json({ error: "Failed to process PDF" });
+      res.status(500).json({ 
+        error: "Failed to process PDF",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -111,7 +126,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Chat error:", error);
       const message = error instanceof Error ? error.message : "Failed to process question";
       const statusCode = message === "Document not found" ? 404 : 500;
-      res.status(statusCode).json({ error: message });
+      res.status(statusCode).json({ 
+        error: message,
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -127,7 +145,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })));
     } catch (error) {
       console.error("Get documents error:", error);
-      res.status(500).json({ error: "Failed to fetch documents" });
+      res.status(500).json({ 
+        error: "Failed to fetch documents",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -147,7 +168,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Get document error:", error);
-      res.status(500).json({ error: "Failed to fetch document" });
+      res.status(500).json({ 
+        error: "Failed to fetch document",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -158,7 +182,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Delete document error:", error);
-      res.status(500).json({ error: "Failed to delete document" });
+      res.status(500).json({ 
+        error: "Failed to delete document",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -169,7 +196,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(messages);
     } catch (error) {
       console.error("Get messages error:", error);
-      res.status(500).json({ error: "Failed to fetch messages" });
+      res.status(500).json({ 
+        error: "Failed to fetch messages",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -180,7 +210,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Delete messages error:", error);
-      res.status(500).json({ error: "Failed to delete messages" });
+      res.status(500).json({ 
+        error: "Failed to delete messages",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

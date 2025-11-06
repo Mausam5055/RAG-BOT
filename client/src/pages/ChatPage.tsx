@@ -47,11 +47,9 @@ export default function ChatPage() {
       const formData = new FormData();
       formData.append("file", file);
       
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
+      // Use apiRequest instead of direct fetch to ensure proper backend URL handling
+      const response = await apiRequest("POST", "/api/upload", formData);
+      
       if (!response.ok) {
         throw new Error("Upload failed");
       }
