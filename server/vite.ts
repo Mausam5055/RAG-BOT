@@ -41,7 +41,12 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
-  app.use("*", async (req, res, next) => {
+  app.get("*", async (req, res, next) => {
+    // Don't serve index.html for API routes
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+    
     const url = req.originalUrl;
 
     try {
@@ -96,8 +101,9 @@ export function serveStatic(app: Express) {
     index: false // Don't automatically serve index.html
   }));
 
-  // Serve index.html for all non-API routes
-  app.use("*", (req, res, next) => {
+  // For API routes, let them pass through to the route handlers
+  // For all other routes, serve index.html
+  app.get("*", (req, res, next) => {
     // Don't serve index.html for API routes
     if (req.path.startsWith("/api/")) {
       return next();
