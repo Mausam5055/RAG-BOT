@@ -4,7 +4,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development dotenv -e .env.local -- tsx server/index.ts",
+    "dev": "concurrently \"vite --port 5173\" \"cross-env NODE_ENV=development PORT=5001 dotenv -e .env.local -- tsx server/index.ts\"",
     "build": "vite build && npm run build:server",
     "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "vercel-build": "vite build",
@@ -101,6 +101,7 @@
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.4",

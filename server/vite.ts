@@ -76,6 +76,7 @@ export function serveStatic(app: Express) {
   // Determine the correct path for static files in different environments
   const possiblePaths = [
     path.resolve(import.meta.dirname, "..", "dist"), // Standard build output
+    path.resolve(import.meta.dirname, "..", "dist", "client"), // Render output
     path.resolve(import.meta.dirname, "..", "public"), // Vercel output
     path.resolve(import.meta.dirname, "public"), // Local development
   ];

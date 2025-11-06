@@ -36,6 +36,14 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    // Proxy API requests to the backend server during development
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   // Add base configuration for Vercel
   base: process.env.VERCEL ? './' : '/',
