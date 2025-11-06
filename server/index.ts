@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
 import path from "path";
 
 // Load environment variables
@@ -103,8 +103,8 @@ if (process.env.NODE_ENV !== "production") {
     const port = parseInt(process.env.PORT || '5000', 10);
     server.listen({
       port,
-      host: "localhost", // Changed from "0.0.0.0" to "localhost" for Windows compatibility
-      // Removed reusePort option which is not supported on Windows
+      // Use "0.0.0.0" for better compatibility across environments
+      host: "0.0.0.0",
     }, () => {
       log(`serving on port ${port}`);
     });
