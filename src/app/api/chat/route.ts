@@ -18,8 +18,8 @@ export async function POST(req: Request) {
     const lastMessage = messages[messages.length - 1];
     console.log("Last message:", lastMessage);
 
-    // Get the context from the last message
-    const context = await getContext(lastMessage.content || '', "");
+    // Get the context from the last message with a lower minimum score for testing
+    const context = await getContext(lastMessage.content || '', "", 3000, 0.3);
     console.log("Retrieved context:", context);
 
     // Format messages for Google Gemini

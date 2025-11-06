@@ -15,7 +15,8 @@ export async function POST(req: Request) {
     const lastMessageContent = lastMessage.parts?.filter((part: any) => part.type === 'text').map((part: any) => part.text).join(' ') || lastMessage.content || '';
     console.log("Last message content:", lastMessageContent);
     
-    const context = await getContext(lastMessageContent, '', 10000, 0.7, false) as ScoredPineconeRecord[]
+    // Use a lower minimum score to be more lenient in matching
+    const context = await getContext(lastMessageContent, '', 10000, 0.3, false) as ScoredPineconeRecord[]
     console.log("Context retrieved:", context.length);
     
     return NextResponse.json({ context })

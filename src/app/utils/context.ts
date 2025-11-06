@@ -21,6 +21,11 @@ export const getContext = async (message: string, namespace: string, maxTokens =
     const matches = await getMatchesFromEmbeddings(embedding, 3, namespace);
     console.log("Retrieved matches:", matches.length);
 
+    // Log match scores for debugging
+    matches.forEach((match, index) => {
+      console.log(`Match ${index + 1} score:`, match.score);
+    });
+
     // Filter out the matches that have a score lower than the minimum score
     const qualifyingDocs = matches.filter(m => m.score && m.score > minScore);
     console.log("Qualifying docs:", qualifyingDocs.length);
@@ -37,6 +42,13 @@ export const getContext = async (message: string, namespace: string, maxTokens =
     
     // If no context is found, return a message indicating this
     if (result.length === 0) {
+      // Log more details about why no context was found
+      console.log("No qualifying documents found. Total matches:", matches.length);
+      if (matches.length > 0) {
+        const scores = matches.map(m => m.score).filter(score => score !== undefined);
+        console.log("Match scores:", scores);
+        console.log("Min score threshold:", minScore);
+      }
       return "No relevant context was found for this query.";
     }
     

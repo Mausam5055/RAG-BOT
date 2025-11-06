@@ -1,10 +1,11 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState, useRef } from "react";
 import { urls } from "./urls";
 import UrlButton from "./UrlButton";
 import { Card, ICard } from "./Card";
 import { clearIndex, crawlDocument } from "./utils";
 
 import { Button } from "./Button";
+
 interface ContextProps {
   className: string;
   selected: string[] | null;
@@ -13,16 +14,57 @@ interface ContextProps {
 export const Context: React.FC<ContextProps> = ({ className, selected }) => {
   const [entries, setEntries] = useState(urls);
   const [cards, setCards] = useState<ICard[]>([]);
-
   const [splittingMethod, setSplittingMethod] = useState("markdown");
   const [chunkSize, setChunkSize] = useState(256);
   const [overlap, setOverlap] = useState(1);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Scroll to selected card
   useEffect(() => {
     const element = selected && document.getElementById(selected[0]);
     element?.scrollIntoView({ behavior: "smooth" });
   }, [selected]);
+
+  const handlePdfUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadStatus("Uploading and processing PDF...");
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('splittingMethod', splittingMethod);
+      formData.append('chunkSize', chunkSize.toString());
+      formData.append('overlap', overlap.toString());
+
+      const response = await fetch("/api/upload-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setUploadStatus(`Success: ${result.message}`);
+        // Refresh the context to show the new content
+        // In a real implementation, you might want to fetch the updated cards
+      } else {
+        setUploadStatus(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      setUploadStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const DropdownLabel: React.FC<
     React.PropsWithChildren<{ htmlFor: string }>
@@ -59,6 +101,34 @@ export const Context: React.FC<ContextProps> = ({ className, selected }) => {
           {buttons}
         </div>
         <div className="flex-grow w-full px-4">
+          {/* PDF Upload Button */}
+          <div className="w-full my-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".pdf,application/pdf"
+              onChange={handlePdfUpload}
+              disabled={isUploading}
+              className="hidden"
+              id="pdf-upload"
+            />
+            <label
+              htmlFor="pdf-upload"
+              className={`w-full my-2 uppercase active:scale-[98%] transition-transform duration-100 flex items-center justify-center p-2 rounded cursor-pointer ${
+                isUploading 
+                  ? "bg-gray-500 cursor-not-allowed" 
+                  : "bg-blue-600 hover:bg-blue-700"
+              } text-white`}
+            >
+              {isUploading ? "Processing..." : "Upload PDF"}
+            </label>
+            {uploadStatus && (
+              <div className={`mt-2 text-sm ${uploadStatus.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>
+                {uploadStatus}
+              </div>
+            )}
+          </div>
+          
           <Button
             className="w-full my-2 uppercase active:scale-[98%] transition-transform duration-100"
             style={{
@@ -98,6 +168,7 @@ export const Context: React.FC<ContextProps> = ({ className, selected }) => {
                   id="chunkSize"
                   min={1}
                   max={2048}
+                  value={chunkSize}
                   onChange={(e) => setChunkSize(parseInt(e.target.value))}
                 />
               </div>
@@ -111,6 +182,7 @@ export const Context: React.FC<ContextProps> = ({ className, selected }) => {
                   id="overlap"
                   min={1}
                   max={200}
+                  value={overlap}
                   onChange={(e) => setOverlap(parseInt(e.target.value))}
                 />
               </div>
