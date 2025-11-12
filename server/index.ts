@@ -7,6 +7,20 @@ import path from "path";
 // Load environment variables
 dotenv.config();
 
+// Add logging to verify environment variables
+console.log("Environment variables check:");
+console.log("GEMINI_API_KEY present:", !!process.env.GEMINI_API_KEY);
+console.log("PINECONE_API_KEY present:", !!process.env.PINECONE_API_KEY);
+console.log("PINECONE_INDEX present:", !!process.env.PINECONE_INDEX);
+if (process.env.GEMINI_API_KEY) {
+  console.log("GEMINI_API_KEY length:", process.env.GEMINI_API_KEY.length);
+}
+if (process.env.GOOGLE_MODEL) {
+  console.log("GOOGLE_MODEL:", process.env.GOOGLE_MODEL);
+} else {
+  console.log("GOOGLE_MODEL not set, using default");
+}
+
 const app = express();
 
 // Add CORS middleware

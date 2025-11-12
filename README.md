@@ -219,7 +219,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgements
 
-- [Google Gemini](https://ai.google.dev/) for the powerful language model
+- [Google Gemini](https://ai.google.dev/) for the powerful language model(used embedding_model_001)
 - [Pinecone](https://www.pinecone.io/) for the vector database
 - [Vercel](https://vercel.com/) for frontend hosting
 - [Render](https://render.com/) for backend hosting

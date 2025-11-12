@@ -75,8 +75,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Upload error:", error);
-      res.status(500).json({ 
-        error: "Failed to process PDF",
+      
+      // Handle specific error types
+      let errorMessage = "Failed to process PDF";
+      let statusCode = 500;
+      
+      if (error instanceof Error) {
+        if (error.message.includes('503')) {
+          statusCode = 503;
+          errorMessage = "The AI model is temporarily overloaded. Please try again in a few moments.";
+        } else if (error.message.includes('429')) {
+          statusCode = 429;
+          errorMessage = "Rate limit exceeded. Please wait before making another request.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      res.status(statusCode).json({ 
+        error: errorMessage,
         message: error instanceof Error ? error.message : "Unknown error"
       });
     }
@@ -85,12 +102,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ask a question about a document
   app.post("/api/chat", async (req, res) => {
     try {
+      console.log("Received chat request:", req.body);
       const parsed = chatRequestSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid request", details: parsed.error });
       }
 
       const { documentId, question } = parsed.data;
+      console.log("Processing question for document:", documentId);
 
       // Verify document exists before creating messages
       const document = await storage.getDocument(documentId);
@@ -131,9 +150,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Chat error:", error);
       const message = error instanceof Error ? error.message : "Failed to process question";
-      const statusCode = message === "Document not found" ? 404 : 500;
+      
+      // Handle specific error types
+      let statusCode = 500;
+      let errorMessage = message;
+      
+      if (message.includes('503')) {
+        statusCode = 503;
+        errorMessage = "The AI model is temporarily overloaded. Please try again in a few moments.";
+      } else if (message.includes('429')) {
+        statusCode = 429;
+        errorMessage = "Rate limit exceeded. Please wait before making another request.";
+      } else if (message === "Document not found") {
+        statusCode = 404;
+      }
+      
       res.status(statusCode).json({ 
-        error: message,
+        error: errorMessage,
         message: error instanceof Error ? error.message : "Unknown error"
       });
     }

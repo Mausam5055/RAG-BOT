@@ -26,19 +26,23 @@ export class RAGService {
   }
 
   async answerQuestion(documentId: string, question: string): Promise<{ answer: string; snippets: ContextSnippet[] }> {
+    console.log("Answering question for document:", documentId);
     const document = await storage.getDocument(documentId);
     if (!document) {
       throw new Error("Document not found");
     }
 
+    console.log("Generating question embedding");
     const questionEmbedding = await geminiService.generateEmbedding(question);
 
+    console.log("Searching for similar content");
     const searchResults = await pineconeService.searchSimilar(documentId, questionEmbedding, 5);
 
     const context = searchResults
       .map((result) => result.text)
       .join("\n\n");
 
+    console.log("Generating answer with context length:", context.length);
     const answer = await geminiService.generateAnswer(question, context);
 
     const snippets: ContextSnippet[] = searchResults.map((result) => ({
